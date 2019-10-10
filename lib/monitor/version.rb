@@ -1,3 +1,3 @@
-module Monitor
+class Monitor
   VERSION = "0.1.0"
 end
