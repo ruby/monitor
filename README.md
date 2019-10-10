@@ -1,8 +1,15 @@
 # Monitor
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/monitor`. To experiment with that code, run `bin/console` for an interactive prompt.
+In concurrent programming, a monitor is an object or module intended to be
+used safely by more than one thread.  The defining characteristic of a
+monitor is that its methods are executed with mutual exclusion.  That is, at
+each point in time, at most one thread may be executing any of its methods.
+This mutual exclusion greatly simplifies reasoning about the implementation
+of monitors compared to reasoning about parallel code that updates a data
+structure.
 
-TODO: Delete this and the text above, and describe your gem
+You can read more about the general principles on the Wikipedia page for
+Monitors[http://en.wikipedia.org/wiki/Monitor_%28synchronization%29]
 
 ## Installation
 
@@ -22,7 +29,36 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+require 'monitor.rb'
+
+buf = []
+buf.extend(MonitorMixin)
+empty_cond = buf.new_cond
+
+# consumer
+Thread.start do
+  loop do
+    buf.synchronize do
+      empty_cond.wait_while { buf.empty? }
+      print buf.shift
+    end
+  end
+end
+
+# producer
+while line = ARGF.gets
+  buf.synchronize do
+    buf.push(line)
+    empty_cond.signal
+  end
+end
+```
+
+The consumer thread waits for the producer thread to push a line to buf
+while <tt>buf.empty?</tt>.  The producer thread (main thread) reads a
+line from ARGF and pushes it into buf then calls <tt>empty_cond.signal</tt>
+to notify the consumer thread of new data.
 
 ## Development
 
@@ -32,5 +68,5 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/hsbt/monitor.
+Bug reports and pull requests are welcome on GitHub at https://github.com/ruby/monitor.
 
